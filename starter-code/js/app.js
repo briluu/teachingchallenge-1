@@ -31,24 +31,40 @@ myApp.controller('GoogleApiCtrl', ['$scope', '$window', function($scope,$window)
   // START
   // handleClientLoad function called when Google JS library is loaded in index.html head tag
   $scope.handleClientLoad = function() { 
-    
+    gapi.client.setApiKey(apiKey);
+    window.setTimeout($scope.checkAuth, 1);
   }
 
   // check authorization status on page load and as needed in the future
   $scope.checkAuth = function() {
-    
-    
+    gapi.auth.authorize(
+    {
+      client_id: clientId,
+      scope: scopes.join(' '),
+      immediate: true
+    }, $scope.handleAuthResult);
   }
 
   // handle authorization result
   $scope.handleAuthResult = function(authResult) {
-    
-    
+    var authorizeButton = document.getElementById('authorize-button');
+    if (authResult && !authResult.error) {
+      authorizeButton.style.visibility = 'hidden';
+      $scope.loadDriveApi();
+    } else {
+      authorizeButton.style.visibility = '';
+    }
   }
    
   // authorize the user when the Sign In with Google button is pressed
   $scope.handleAuthClick = function(event) {
 
+    gapi.auth.authorize(
+    {
+      client_id: clientId,
+      scope: scopes,
+      immediate: false
+    }, $scope.handleAuthResult);
     
   }
 
@@ -56,21 +72,28 @@ myApp.controller('GoogleApiCtrl', ['$scope', '$window', function($scope,$window)
   $scope.loadDriveApi = function(){
 
     // load the API
-   
-      // call listFiles()
-     
+    gapi.client.load('drive', 'v2', function() {
+      $scope.listFiles();
     })
+      // call listFiles()
   }
 
   // send request for files to the API and save them to the scope
   $scope.listFiles = function() {
 
     // build a request object to request up to ten Drive files
-    
-
+    var request = gapi.client.drive.files.list(
+      {
+        'maxResults': 10
+      }    
+      );
     // execute the request
 
-    
+    request.execute(function(resp){
+      $scope.files = resp.items;
+      $scope.isBackendReady = true;
+
+    })
 
  
   }
